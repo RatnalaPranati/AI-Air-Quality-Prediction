@@ -1,26 +1,45 @@
 from flask import Flask, render_template, request, jsonify
+
 import requests
 import pandas as pd
 import joblib
 import os
 import numpy as np
 
+
 app = Flask(__name__)
+
 
 # ============================================================
 # LOAD ML MODEL
 # ============================================================
 
-MODEL_PATH = os.path.join("models", "aqi_prediction_model.pkl")
-FEATURES_PATH = os.path.join("models", "features.pkl")
+MODEL_PATH = os.path.join(
+    "models",
+    "aqi_prediction_model.pkl"
+)
+
+FEATURES_PATH = os.path.join(
+    "models",
+    "features.pkl"
+)
+
 
 try:
+
     model = joblib.load(MODEL_PATH)
+
     features = joblib.load(FEATURES_PATH)
+
     print("ML model loaded successfully.")
+
     print("Features:", features)
+
+
 except Exception as e:
+
     model = None
+
     features = [
         "pm10",
         "pm2_5",
@@ -29,6 +48,7 @@ except Exception as e:
         "sulphur_dioxide",
         "ozone"
     ]
+
     print("Error loading model:", e)
 
 
@@ -61,7 +81,7 @@ def get_aqi_category(aqi):
 
 
 # ============================================================
-# AQI COLOR
+# AQI COLOR / LEVEL
 # ============================================================
 
 def get_aqi_level(aqi):
@@ -100,15 +120,29 @@ def get_coordinates(city):
         "format": "json"
     }
 
-    response = requests.get(url, params=params, timeout=10)
+    response = requests.get(
+        url,
+        params=params,
+        timeout=15,
+        headers={
+            "User-Agent": "AI-Air-Quality-Prediction/1.0"
+        }
+    )
 
     if response.status_code != 200:
-        raise Exception("Geocoding API failed.")
+
+        raise Exception(
+            f"Geocoding API failed with status "
+            f"{response.status_code}"
+        )
 
     data = response.json()
 
     if "results" not in data or len(data["results"]) == 0:
-        raise Exception(f"Could not find location: {city}")
+
+        raise Exception(
+            f"Could not find location: {city}"
+        )
 
     result = data["results"][0]
 
@@ -131,6 +165,7 @@ def get_air_quality(latitude, longitude):
     params = {
         "latitude": latitude,
         "longitude": longitude,
+
         "current": (
             "pm10,"
             "pm2_5,"
@@ -140,6 +175,7 @@ def get_air_quality(latitude, longitude):
             "ozone,"
             "us_aqi"
         ),
+
         "hourly": (
             "us_aqi,"
             "pm10,"
@@ -149,14 +185,37 @@ def get_air_quality(latitude, longitude):
             "sulphur_dioxide,"
             "ozone"
         ),
+
         "forecast_days": 1,
+
         "timezone": "auto"
     }
 
-    response = requests.get(url, params=params, timeout=15)
+    response = requests.get(
+        url,
+        params=params,
+        timeout=20,
+        headers={
+            "User-Agent": "AI-Air-Quality-Prediction/1.0"
+        }
+    )
 
     if response.status_code != 200:
-        raise Exception("Air quality API failed.")
+
+        print(
+            "Air Quality API status:",
+            response.status_code
+        )
+
+        print(
+            "Air Quality API response:",
+            response.text[:500]
+        )
+
+        raise Exception(
+            f"Air quality API failed with status "
+            f"{response.status_code}"
+        )
 
     return response.json()
 
@@ -172,20 +231,57 @@ def get_weather(latitude, longitude):
     params = {
         "latitude": latitude,
         "longitude": longitude,
+
         "current": (
             "temperature_2m,"
             "relative_humidity_2m,"
             "wind_speed_10m"
         ),
+
         "timezone": "auto"
     }
 
-    response = requests.get(url, params=params, timeout=15)
+    try:
 
-    if response.status_code != 200:
-        raise Exception("Weather API failed.")
+        response = requests.get(
+            url,
+            params=params,
+            timeout=20,
+            headers={
+                "User-Agent": "AI-Air-Quality-Prediction/1.0"
+            }
+        )
 
-    return response.json()
+        print(
+            "Weather API status:",
+            response.status_code
+        )
+
+        if response.status_code != 200:
+
+            print(
+                "Weather API response:",
+                response.text[:500]
+            )
+
+            raise Exception(
+                f"Weather API failed with status "
+                f"{response.status_code}"
+            )
+
+        return response.json()
+
+    except requests.exceptions.Timeout:
+
+        raise Exception(
+            "Weather API request timed out."
+        )
+
+    except requests.exceptions.RequestException as e:
+
+        raise Exception(
+            f"Weather API connection error: {str(e)}"
+        )
 
 
 # ============================================================
@@ -194,28 +290,55 @@ def get_weather(latitude, longitude):
 
 def find_main_pollutant(air_data):
 
-    current = air_data.get("current", {})
+    current = air_data.get(
+        "current",
+        {}
+    )
 
     pollutants = {
-        "PM2.5": current.get("pm2_5"),
-        "PM10": current.get("pm10"),
-        "CO": current.get("carbon_monoxide"),
-        "NO₂": current.get("nitrogen_dioxide"),
-        "SO₂": current.get("sulphur_dioxide"),
-        "O₃": current.get("ozone")
+
+        "PM2.5": current.get(
+            "pm2_5"
+        ),
+
+        "PM10": current.get(
+            "pm10"
+        ),
+
+        "CO": current.get(
+            "carbon_monoxide"
+        ),
+
+        "NO₂": current.get(
+            "nitrogen_dioxide"
+        ),
+
+        "SO₂": current.get(
+            "sulphur_dioxide"
+        ),
+
+        "O₃": current.get(
+            "ozone"
+        )
     }
 
     valid_pollutants = {
+
         name: value
+
         for name, value in pollutants.items()
+
         if value is not None
     }
 
     if not valid_pollutants:
+
         return "Unknown"
 
-    # Simple relative comparison
-    return max(valid_pollutants, key=valid_pollutants.get)
+    return max(
+        valid_pollutants,
+        key=valid_pollutants.get
+    )
 
 
 # ============================================================
@@ -224,36 +347,77 @@ def find_main_pollutant(air_data):
 
 def predict_next_hour(air_data):
 
-    current = air_data.get("current", {})
+    current = air_data.get(
+        "current",
+        {}
+    )
 
     input_data = {
-        "pm10": current.get("pm10", 0),
-        "pm2_5": current.get("pm2_5", 0),
-        "carbon_monoxide": current.get("carbon_monoxide", 0),
-        "nitrogen_dioxide": current.get("nitrogen_dioxide", 0),
-        "sulphur_dioxide": current.get("sulphur_dioxide", 0),
-        "ozone": current.get("ozone", 0)
+
+        "pm10": current.get(
+            "pm10",
+            0
+        ),
+
+        "pm2_5": current.get(
+            "pm2_5",
+            0
+        ),
+
+        "carbon_monoxide": current.get(
+            "carbon_monoxide",
+            0
+        ),
+
+        "nitrogen_dioxide": current.get(
+            "nitrogen_dioxide",
+            0
+        ),
+
+        "sulphur_dioxide": current.get(
+            "sulphur_dioxide",
+            0
+        ),
+
+        "ozone": current.get(
+            "ozone",
+            0
+        )
     }
 
-    df = pd.DataFrame([input_data])
+    df = pd.DataFrame(
+        [input_data]
+    )
 
     # Make sure feature order matches training
+
     if features is not None:
 
         try:
+
             df = df[features]
+
         except Exception:
+
             pass
 
     if model is None:
+
         return None
 
     prediction = model.predict(df)[0]
 
     # AQI cannot be negative
-    prediction = max(0, float(prediction))
 
-    return round(prediction, 2)
+    prediction = max(
+        0,
+        float(prediction)
+    )
+
+    return round(
+        prediction,
+        2
+    )
 
 
 # ============================================================
@@ -265,7 +429,9 @@ def get_recommendation(aqi):
     if aqi <= 50:
 
         return {
+
             "title": "Air quality is good",
+
             "message": (
                 "Air quality is considered satisfactory. "
                 "Outdoor activities are generally safe."
@@ -275,7 +441,9 @@ def get_recommendation(aqi):
     elif aqi <= 100:
 
         return {
+
             "title": "Air quality is acceptable",
+
             "message": (
                 "Most people can continue normal outdoor activities. "
                 "Sensitive individuals should monitor their symptoms."
@@ -285,7 +453,9 @@ def get_recommendation(aqi):
     elif aqi <= 150:
 
         return {
+
             "title": "Sensitive groups should take care",
+
             "message": (
                 "People with respiratory or heart conditions, "
                 "children and older adults should reduce prolonged "
@@ -296,7 +466,9 @@ def get_recommendation(aqi):
     elif aqi <= 200:
 
         return {
+
             "title": "Limit prolonged outdoor activity",
+
             "message": (
                 "Everyone may begin to experience health effects. "
                 "Consider reducing prolonged outdoor activities."
@@ -306,7 +478,9 @@ def get_recommendation(aqi):
     elif aqi <= 300:
 
         return {
+
             "title": "Avoid prolonged outdoor exposure",
+
             "message": (
                 "Health alert conditions may affect everyone. "
                 "Reduce outdoor activities and consider wearing "
@@ -317,7 +491,9 @@ def get_recommendation(aqi):
     else:
 
         return {
+
             "title": "Hazardous air quality",
+
             "message": (
                 "Health warnings of emergency conditions are possible. "
                 "Avoid outdoor exposure as much as possible."
@@ -332,7 +508,9 @@ def get_recommendation(aqi):
 @app.route("/")
 def home():
 
-    return render_template("index.html")
+    return render_template(
+        "index.html"
+    )
 
 
 # ============================================================
@@ -342,13 +520,19 @@ def home():
 @app.route("/api/air-quality")
 def air_quality_api():
 
-    city = request.args.get("city", "").strip()
+    city = request.args.get(
+        "city",
+        ""
+    ).strip()
 
     if not city:
 
         return jsonify({
+
             "success": False,
+
             "error": "Please enter a city name."
+
         }), 400
 
     try:
@@ -357,10 +541,14 @@ def air_quality_api():
         # LOCATION
         # ----------------------------------------------------
 
-        location = get_coordinates(city)
+        location = get_coordinates(
+            city
+        )
 
         latitude = location["latitude"]
+
         longitude = location["longitude"]
+
 
         # ----------------------------------------------------
         # AIR QUALITY
@@ -371,14 +559,24 @@ def air_quality_api():
             longitude
         )
 
-        current_air = air_data.get("current", {})
+        current_air = air_data.get(
+            "current",
+            {}
+        )
 
-        current_aqi = current_air.get("us_aqi")
+        current_aqi = current_air.get(
+            "us_aqi"
+        )
 
         if current_aqi is None:
+
             current_aqi = 0
 
-        current_aqi = round(float(current_aqi), 2)
+        current_aqi = round(
+            float(current_aqi),
+            2
+        )
+
 
         # ----------------------------------------------------
         # WEATHER
@@ -394,6 +592,7 @@ def air_quality_api():
             {}
         )
 
+
         # ----------------------------------------------------
         # ML PREDICTION
         # ----------------------------------------------------
@@ -403,7 +602,9 @@ def air_quality_api():
         )
 
         if predicted_aqi is None:
+
             predicted_aqi = current_aqi
+
 
         # ----------------------------------------------------
         # MAIN POLLUTANT
@@ -413,6 +614,7 @@ def air_quality_api():
             air_data
         )
 
+
         # ----------------------------------------------------
         # RECOMMENDATION
         # ----------------------------------------------------
@@ -420,6 +622,7 @@ def air_quality_api():
         recommendation = get_recommendation(
             current_aqi
         )
+
 
         # ----------------------------------------------------
         # HOURLY TREND
@@ -450,9 +653,15 @@ def air_quality_api():
             if aqi is not None:
 
                 trend.append({
+
                     "time": time,
-                    "aqi": round(float(aqi), 2)
+
+                    "aqi": round(
+                        float(aqi),
+                        2
+                    )
                 })
+
 
         # ----------------------------------------------------
         # RESULT
@@ -463,9 +672,13 @@ def air_quality_api():
             "success": True,
 
             "location": {
+
                 "city": location["name"],
+
                 "country": location["country"],
+
                 "latitude": latitude,
+
                 "longitude": longitude
             },
 
@@ -549,11 +762,17 @@ def air_quality_api():
             "recommendation": recommendation
         }
 
-        return jsonify(result)
+        return jsonify(
+            result
+        )
+
 
     except Exception as e:
 
-        print("ERROR:", str(e))
+        print(
+            "ERROR:",
+            str(e)
+        )
 
         return jsonify({
 
@@ -569,8 +788,12 @@ def air_quality_api():
 # ============================================================
 
 if __name__ == "__main__":
+
     app.run(
+
         debug=True,
+
         host="127.0.0.1",
+
         port=5000
     )
