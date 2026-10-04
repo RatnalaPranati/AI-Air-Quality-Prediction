@@ -174,7 +174,8 @@ python web_app.py
 
 7. Open in browser
 http://127.0.0.1:5000
-uture Scope
+
+Future Scope
 - Deep learning-based AQI prediction
 - LSTM-based time-series forecasting
 - More advanced pollutant forecasting
