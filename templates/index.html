@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Air Quality Prediction</title>
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <!-- CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <header class="header">
+
+        <div class="header-container">
+
+            <div class="brand">
+
+                <div class="brand-icon">
+                    🌍
+                </div>
+
+                <div>
+                    <h1>AI Air Quality</h1>
+                    <span>Real-Time Monitoring & Prediction</span>
+                </div>
+
+            </div>
+
+            <div class="status">
+
+                <span class="status-dot"></span>
+
+                <span>Live Data</span>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
+    <main class="container">
+
+
+        <!-- =================================================
+             HERO
+        ================================================== -->
+
+        <section class="hero">
+
+            <div class="hero-content">
+
+                <p class="eyebrow">
+                    ARTIFICIAL INTELLIGENCE • MACHINE LEARNING
+                </p>
+
+                <h2>
+                    Understand the air around you.
+                </h2>
+
+                <p class="hero-description">
+
+                    Get real-time air quality information and
+                    AI-powered next-hour AQI predictions for any city.
+
+                </p>
+
+
+                <!-- SEARCH -->
+
+                <div class="search-box">
+
+                    <input
+                        type="text"
+                        id="cityInput"
+                        placeholder="Enter city name..."
+                        autocomplete="off"
+                    >
+
+                    <button
+                        id="searchButton"
+                        onclick="searchCity()"
+                    >
+
+                        <span id="searchText">
+                            Check Air Quality
+                        </span>
+
+                        <span
+                            id="loadingSpinner"
+                            class="spinner hidden"
+                        ></span>
+
+                    </button>
+
+                </div>
+
+                <p
+                    id="errorMessage"
+                    class="error-message"
+                ></p>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             RESULTS
+        ================================================== -->
+
+        <section
+            id="results"
+            class="results hidden"
+        >
+
+
+            <!-- LOCATION -->
+
+            <div class="location-bar">
+
+                <div>
+
+                    <span class="location-label">
+                        AIR QUALITY REPORT
+                    </span>
+
+                    <h3 id="locationName">
+                        Hyderabad, India
+                    </h3>
+
+                </div>
+
+                <div class="coordinates">
+
+                    <span id="coordinates">
+                        --
+
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 AQI CARDS
+            ================================================== -->
+
+            <div class="aqi-grid">
+
+
+                <!-- CURRENT AQI -->
+
+                <div
+                    class="aqi-card current-card"
+                    id="currentCard"
+                >
+
+                    <div class="card-top">
+
+                        <div>
+
+                            <span class="card-label">
+                                CURRENT AQI
+                            </span>
+
+                            <div
+                                id="currentAQI"
+                                class="aqi-number"
+                            >
+                                --
+                            </div>
+
+                        </div>
+
+                        <div class="aqi-icon">
+                            🌫️
+                        </div>
+
+                    </div>
+
+                    <div
+                        id="currentCategory"
+                        class="aqi-category"
+                    >
+                        --
+                    </div>
+
+                    <div class="main-pollutant">
+
+                        Main pollutant:
+
+                        <strong id="mainPollutant">
+                            --
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PREDICTION -->
+
+                <div
+                    class="aqi-card prediction-card"
+                >
+
+                    <div class="card-top">
+
+                        <div>
+
+                            <span class="card-label">
+                                AI NEXT-HOUR PREDICTION
+                            </span>
+
+                            <div
+                                id="predictedAQI"
+                                class="aqi-number"
+                            >
+                                --
+                            </div>
+
+                        </div>
+
+                        <div class="prediction-icon">
+                            🤖
+                        </div>
+
+                    </div>
+
+                    <div
+                        id="predictedCategory"
+                        class="aqi-category"
+                    >
+                        --
+                    </div>
+
+                    <div class="prediction-change">
+
+                        <span>
+                            Expected change:
+                        </span>
+
+                        <strong id="predictionDifference">
+                            --
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 POLLUTANTS
+            ================================================== -->
+
+            <section class="section">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-label">
+                            AIR COMPOSITION
+                        </span>
+
+                        <h2>
+                            Current Pollutants
+                        </h2>
+
+                    </div>
+
+                    <span class="unit-note">
+                        Current concentration
+                    </span>
+
+                </div>
+
+
+                <div class="pollutant-grid">
+
+
+                    <div class="pollutant-card">
+
+                        <div class="pollutant-icon">
+                            PM
+                        </div>
+
+                        <div>
+
+                            <span>
+                                PM2.5
+                            </span>
+
+                            <strong id="pm25">
+                                --
+                            </strong>
+
+                            <small>
+                                μg/m³
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="pollutant-card">
+
+                        <div class="pollutant-icon">
+                            PM
+                        </div>
+
+                        <div>
+
+                            <span>
+                                PM10
+                            </span>
+
+                            <strong id="pm10">
+                                --
+                            </strong>
+
+                            <small>
+                                μg/m³
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="pollutant-card">
+
+                        <div class="pollutant-icon">
+                            CO
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Carbon Monoxide
+                            </span>
+
+                            <strong id="co">
+                                --
+                            </strong>
+
+                            <small>
+                                μg/m³
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="pollutant-card">
+
+                        <div class="pollutant-icon">
+                            NO₂
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Nitrogen Dioxide
+                            </span>
+
+                            <strong id="no2">
+                                --
+                            </strong>
+
+                            <small>
+                                μg/m³
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="pollutant-card">
+
+                        <div class="pollutant-icon">
+                            SO₂
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Sulphur Dioxide
+                            </span>
+
+                            <strong id="so2">
+                                --
+                            </strong>
+
+                            <small>
+                                μg/m³
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="pollutant-card">
+
+                        <div class="pollutant-icon">
+                            O₃
+                        </div>
+
+                        <div>
+
+                            <span>
+                                Ozone
+                            </span>
+
+                            <strong id="o3">
+                                --
+                            </strong>
+
+                            <small>
+                                μg/m³
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+                 CHART + WEATHER
+            ================================================== -->
+
+            <div class="two-column">
+
+
+                <!-- AQI TREND -->
+
+                <section class="panel chart-panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <span class="section-label">
+                                24-HOUR DATA
+                            </span>
+
+                            <h2>
+                                AQI Trend
+                            </h2>
+
+                        </div>
+
+                        <span class="chart-badge">
+                            Live
+                        </span>
+
+                    </div>
+
+                    <div class="chart-container">
+
+                        <canvas id="aqiChart"></canvas>
+
+                    </div>
+
+                </section>
+
+
+                <!-- WEATHER -->
+
+                <section class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <span class="section-label">
+                                WEATHER CONDITIONS
+                            </span>
+
+                            <h2>
+                                Current Weather
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="weather-grid">
+
+
+                        <div class="weather-item">
+
+                            <div class="weather-symbol">
+                                🌡️
+                            </div>
+
+                            <div>
+
+                                <span>
+                                    Temperature
+                                </span>
+
+                                <strong id="temperature">
+                                    --
+                                </strong>
+
+                                <small>
+                                    °C
+                                </small>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="weather-item">
+
+                            <div class="weather-symbol">
+                                💧
+                            </div>
+
+                            <div>
+
+                                <span>
+                                    Humidity
+                                </span>
+
+                                <strong id="humidity">
+                                    --
+                                </strong>
+
+                                <small>
+                                    %
+                                </small>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="weather-item">
+
+                            <div class="weather-symbol">
+                                💨
+                            </div>
+
+                            <div>
+
+                                <span>
+                                    Wind Speed
+                                </span>
+
+                                <strong id="windSpeed">
+                                    --
+                                </strong>
+
+                                <small>
+                                    km/h
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+
+            <!-- =================================================
+                 AI ANALYSIS
+            ================================================== -->
+
+            <section class="ai-analysis">
+
+                <div class="ai-header">
+
+                    <div class="ai-badge">
+                        🤖 AI
+                    </div>
+
+                    <div>
+
+                        <span class="section-label">
+                            MACHINE LEARNING INSIGHT
+                        </span>
+
+                        <h2>
+                            AI Prediction Analysis
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div class="analysis-content">
+
+                    <div class="analysis-number">
+
+                        <span>
+                            Predicted AQI
+                        </span>
+
+                        <strong id="analysisAQI">
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <div class="analysis-text">
+
+                        <h3 id="analysisTitle">
+                            --
+                        </h3>
+
+                        <p id="analysisMessage">
+                            --
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+                 RECOMMENDATION
+            ================================================== -->
+
+            <section class="recommendation">
+
+                <div class="recommendation-icon">
+                    💡
+                </div>
+
+                <div>
+
+                    <span class="section-label">
+                        HEALTH RECOMMENDATION
+                    </span>
+
+                    <h2 id="recommendationTitle">
+                        --
+                    </h2>
+
+                    <p id="recommendationMessage">
+                        --
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================================
+                 HOW IT WORKS
+            ================================================== -->
+
+            <section class="how-it-works">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <span class="section-label">
+                            SYSTEM ARCHITECTURE
+                        </span>
+
+                        <h2>
+                            How This System Works
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+                <div class="steps">
+
+
+                    <div class="step">
+
+                        <div class="step-number">
+                            01
+                        </div>
+
+                        <h3>
+                            User Input
+                        </h3>
+
+                        <p>
+                            User enters a city name into the application.
+                        </p>
+
+                    </div>
+
+
+                    <div class="step">
+
+                        <div class="step-number">
+                            02
+                        </div>
+
+                        <h3>
+                            Live Data
+                        </h3>
+
+                        <p>
+                            Open-Meteo APIs provide current air quality
+                            and weather information.
+                        </p>
+
+                    </div>
+
+
+                    <div class="step">
+
+                        <div class="step-number">
+                            03
+                        </div>
+
+                        <h3>
+                            ML Prediction
+                        </h3>
+
+                        <p>
+                            The trained Extra Trees model predicts
+                            the next-hour AQI.
+                        </p>
+
+                    </div>
+
+
+                    <div class="step">
+
+                        <div class="step-number">
+                            04
+                        </div>
+
+                        <h3>
+                            Result
+                        </h3>
+
+                        <p>
+                            The system displays AQI, pollutants,
+                            prediction and recommendations.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+        </section>
+
+
+        <!-- =================================================
+             EMPTY STATE
+        ================================================== -->
+
+        <section
+            id="welcome"
+            class="welcome"
+        >
+
+            <div class="welcome-icon">
+                🌎
+            </div>
+
+            <h2>
+                Check air quality for any city
+            </h2>
+
+            <p>
+                Enter a city above to view real-time air quality,
+                weather conditions and AI-powered prediction.
+            </p>
+
+        </section>
+
+
+    </main>
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <footer>
+
+        <div class="footer-container">
+
+            <div>
+                <strong>
+                    AI Air Quality Prediction
+                </strong>
+
+                <span>
+                    Machine Learning • Real-Time APIs
+                </span>
+            </div>
+
+            <div>
+                AQI values are based on the US AQI scale.
+            </div>
+
+        </div>
+
+    </footer>
+
+
+    <!-- JAVASCRIPT -->
+
+    <script
+        src="{{ url_for('static', filename='script.js') }}"
+    ></script>
+
+</body>
+
+</html>
