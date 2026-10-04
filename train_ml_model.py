@@ -51,7 +51,6 @@ features = [
 
 target = "next_hour_aqi"
 
-
 X = data[features]
 
 y = data[target]
@@ -68,7 +67,6 @@ X_train, X_test, y_train, y_test = train_test_split(
     random_state=42
 )
 
-
 print("\n===================================")
 print("TRAINING / TESTING DATA")
 print("===================================")
@@ -83,19 +81,28 @@ print("Testing samples :", len(X_test))
 
 models = {
 
+    # Used only for comparison
     "Random Forest": RandomForestRegressor(
-        n_estimators=200,
+        n_estimators=50,
+        max_depth=12,
+        min_samples_leaf=3,
         random_state=42,
         n_jobs=-1
     ),
 
+    # Lightweight model selected for deployment
     "Extra Trees": ExtraTreesRegressor(
-        n_estimators=200,
+        n_estimators=50,
+        max_depth=12,
+        min_samples_leaf=3,
         random_state=42,
         n_jobs=-1
     ),
 
+    # Used for comparison
     "Gradient Boosting": GradientBoostingRegressor(
+        n_estimators=100,
+        max_depth=3,
         random_state=42
     )
 }
@@ -107,10 +114,8 @@ models = {
 
 results = []
 
-best_model = None
-best_model_name = None
-best_rmse = float("inf")
-
+extra_trees_model = None
+extra_trees_rmse = None
 
 print("\n===================================")
 print("MODEL TRAINING")
@@ -121,12 +126,9 @@ for name, model in models.items():
 
     print("\nTraining:", name)
 
-    # Train
     model.fit(X_train, y_train)
 
-    # Predict
     predictions = model.predict(X_test)
-
 
     # ======================================
     # EVALUATION
@@ -149,11 +151,9 @@ for name, model in models.items():
         predictions
     )
 
-
     print("MAE :", round(mae, 2))
     print("RMSE:", round(rmse, 2))
     print("R²  :", round(r2, 3))
-
 
     results.append({
         "Model": name,
@@ -162,22 +162,14 @@ for name, model in models.items():
         "R2": r2
     })
 
-
-    # ======================================
-    # FIND BEST MODEL
-    # ======================================
-
-    if rmse < best_rmse:
-
-        best_rmse = rmse
-
-        best_model = model
-
-        best_model_name = name
+    # Keep Extra Trees model separately
+    if name == "Extra Trees":
+        extra_trees_model = model
+        extra_trees_rmse = rmse
 
 
 # ==========================================
-# STEP 6: SAVE RESULTS
+# STEP 6: MODEL COMPARISON
 # ==========================================
 
 results_df = pd.DataFrame(results)
@@ -186,28 +178,51 @@ print("\n===================================")
 print("MODEL COMPARISON")
 print("===================================")
 
-print(results_df)
+print(results_df.to_string(index=False))
 
 
 # ==========================================
-# STEP 7: SAVE BEST MODEL
+# STEP 7: SELECT EXTRA TREES
+# ==========================================
+
+print("\n===================================")
+print("DEPLOYMENT MODEL")
+print("===================================")
+
+print("Selected model: Extra Trees")
+
+print(
+    "Reason: Extra Trees provides competitive "
+    "accuracy with a smaller model suitable "
+    "for free cloud deployment."
+)
+
+print(
+    "Extra Trees RMSE:",
+    round(extra_trees_rmse, 2)
+)
+
+
+# ==========================================
+# STEP 8: SAVE EXTRA TREES MODEL
 # ==========================================
 
 Path("models").mkdir(
     exist_ok=True
 )
 
-
 model_file = "models/aqi_prediction_model.pkl"
 
-
 joblib.dump(
-    best_model,
-    model_file
+    extra_trees_model,
+    model_file,
+    compress=3
 )
 
 
-# Save feature names too
+# ==========================================
+# STEP 9: SAVE FEATURE NAMES
+# ==========================================
 
 feature_file = "models/features.pkl"
 
@@ -218,20 +233,35 @@ joblib.dump(
 
 
 # ==========================================
-# STEP 8: FINAL RESULT
+# STEP 10: CHECK MODEL SIZE
+# ==========================================
+
+model_size_mb = (
+    Path(model_file).stat().st_size
+    / (1024 * 1024)
+)
+
+
+# ==========================================
+# STEP 11: FINAL RESULT
 # ==========================================
 
 print("\n===================================")
-
-print("BEST MODEL")
+print("FINAL MODEL")
 print("===================================")
 
-print("Model:", best_model_name)
+print("Model:", "Extra Trees")
 
-print("RMSE:", round(best_rmse, 2))
+print("RMSE:", round(extra_trees_rmse, 2))
+
+print("Model file size:",
+      round(model_size_mb, 2),
+      "MB")
 
 print("\nModel saved successfully!")
 
 print("File:", model_file)
+
+print("Features saved:", feature_file)
 
 print("===================================")
