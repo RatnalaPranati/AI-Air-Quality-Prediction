@@ -1,14 +1,14 @@
-# 🌍 AI-Based Real-Time Air Quality Prediction System
+AI-Based Real-Time Air Quality Prediction System
 
 An AI/ML-based web application that provides real-time air quality information and predicts the **next-hour AQI** using machine learning.
 
-## 📌 Project Overview
+ Project Overview
 
 Air pollution is a major environmental and public health concern. This project combines real-time environmental data from Open-Meteo APIs with machine learning to analyze current air quality and predict the expected Air Quality Index (AQI) for the next hour.
 
 The system uses an **Extra Trees Regressor** trained on historical air-quality data and provides an interactive web dashboard where users can enter a city and view air-quality information.
 
-## 🎯 Objectives
+ Objectives
 
 - Monitor real-time air quality for a selected city
 - Analyze major air pollutants
@@ -18,19 +18,19 @@ The system uses an **Extra Trees Regressor** trained on historical air-quality d
 - Visualize recent AQI trends
 - Build an easy-to-use web interface for users
 
-## ✨ Features
+ Features
 
-- 🌍 City-based air quality search
-- 📊 Real-time AQI information
-- 🤖 ML-based next-hour AQI prediction
-- 🧪 Pollutant analysis
-- 🌡️ Weather information
-- 📈 24-hour AQI trend visualization
-- 🏥 Health recommendations
-- 💻 Responsive web interface
-- 🔄 Real-time data from Open-Meteo APIs
+-  City-based air quality search
+-  Real-time AQI information
+-  ML-based next-hour AQI prediction
+-  Pollutant analysis
+-  Weather information
+-  24-hour AQI trend visualization
+-  Health recommendations
+-  Responsive web interface
+-  Real-time data from Open-Meteo APIs
 
-## 🧠 Machine Learning
+ Machine Learning
 
 The project compares multiple machine learning algorithms:
 
@@ -40,7 +40,7 @@ The project compares multiple machine learning algorithms:
 
 The **Extra Trees Regressor** provided the best performance and was selected for the final prediction system.
 
-### Model Performance
+ Model Performance
 
 | Metric | Value |
 |---|---:|
@@ -48,7 +48,7 @@ The **Extra Trees Regressor** provided the best performance and was selected for
 | RMSE | 22.09 |
 | MAE | 10.88 |
 
-### Input Features
+ Input Features
 
 The model uses the following air-quality parameters:
 
@@ -59,11 +59,11 @@ The model uses the following air-quality parameters:
 - Sulphur Dioxide (SO₂)
 - Ozone (O₃)
 
-### Prediction
+ Prediction
 
 The trained model predicts the **expected AQI for the next hour**.
 
-## 🌐 Data Sources
+ Data Sources
 
 The application uses Open-Meteo APIs for:
 
@@ -73,7 +73,7 @@ The application uses Open-Meteo APIs for:
 
 The AQI displayed by the application follows the **US AQI scale**.
 
-## 📊 AQI Categories
+ AQI Categories
 
 | AQI Range | Category |
 |---|---|
@@ -84,7 +84,7 @@ The AQI displayed by the application follows the **US AQI scale**.
 | 201–300 | Very Unhealthy |
 | 301+ | Hazardous |
 
-## 🏗️ System Architecture
+ System Architecture
 
 ```text
 User
